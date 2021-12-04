@@ -9,6 +9,7 @@ class BaseSocket(socket.socket):
             socket.AF_INET,
             socket.SOCK_STREAM,
         )
+        self.run = False  # True когда сокет работает
 
     # настройки подключения
     def set_up(self):
