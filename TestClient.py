@@ -10,9 +10,8 @@ class Client(BaseSocket):
 
     def set_up(self,):
         self.connect(
-            ('127.0.0.1', 4000)
+            ('172.20.10.3', 4000)
         )
-        self.run = True
 
         recv_server = Thread(
             target=self.recv_data
@@ -27,20 +26,24 @@ class Client(BaseSocket):
 
     def send_data(self, data):
         Screen, BG_color = GameEngine.InitPygame()
-        while self.run:
+        while True:
             GameEngine.UpdateWindow(Screen, BG_color)
             time.sleep(0.02)
             mess = GameEngine.events()
             self.send(mess.encode('utf8'))
             if mess == 'exit':
-                self.run = False
+                self.close()
                 sys.exit()
+                break
 
 
     def recv_data(self, recv_socket=None):
-        while self.run:
-            data = self.recv(1024)
-            print(data.decode('utf8'))
+        while True:
+            try:
+                data = self.recv(1024)
+                print(data.decode('utf8'))
+            except:
+                break
 
 
 if __name__ == '__main__':

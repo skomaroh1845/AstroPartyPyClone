@@ -14,9 +14,8 @@ class Server(BaseSocket):
 
     def set_up(self):
         self.bind(
-            ('127.0.0.1', 4000)
+            ('172.20.10.3', 4000)
         )
-        self.run = True
         self.listen()
         self.accept_sockets()
 
@@ -26,11 +25,11 @@ class Server(BaseSocket):
 
     def recv_data(self, recv_socket=None):
         print('listening user')
-        while self.run:
+        while True:
             data = recv_socket.recv(1024)
             data = data.decode('utf8')
             if data == 'exit':
-                self.run = False
+                self.close()
                 sys.exit()
             #print(f'User send {data}')
             mess = self.update_positions(data)
@@ -40,16 +39,19 @@ class Server(BaseSocket):
     def accept_sockets(self):
         print('Server is running')
         # server cycle
-        while self.run:
-            user_socket, user_address = self.accept()  # get connection
-            print(f'New user {user_address} connected')
-            self.users.append(user_socket)  # add new user
+        while True:
+            try:
+                user_socket, user_address = self.accept()  # get connection
+                print(f'New user {user_address} connected')
+                self.users.append(user_socket)  # add new user
 
-            recv_accepted_user = Thread(
-                target=self.recv_data,
-                args=(user_socket,)
-            )
-            recv_accepted_user.start()
+                recv_accepted_user = Thread(
+                    target=self.recv_data,
+                    args=(user_socket,)
+                )
+                recv_accepted_user.start()
+            except:
+                break
 
     def update_positions(self, data):
         if data == '+':
