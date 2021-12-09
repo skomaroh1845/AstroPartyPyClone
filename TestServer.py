@@ -20,7 +20,9 @@ class Server(BaseSocket):
         self.accept_sockets()
 
 
-    def send_data(self, data):
+    def send_data(self, data=None):
+        if data is None:
+            data = self.generate_mess()
         # отправка данных пользователям
         for user in self.users:
             user.socket.send(data.encode('utf8'))
@@ -34,19 +36,20 @@ class Server(BaseSocket):
 
     def user_host(self, index):
         # занимается обработкой пользователя
+        user = self.users[index]
         # инициализация клиента пользователя
         # загрузка карты
         self.send_data('Welcome to the best game ever!')
+
         # обмен данными
-        user = self.users[index]
         while True:
             data = self.recv_data(user.socket)
             # запись и обработка данных
             if data == 'exit':
                 self.close()
                 sys.exit()
-            data = self.update_game(data, index)
-            self.send_data(data)
+            self.update_game(data, index)
+            self.send_data()
 
 
     def accept_sockets(self):
@@ -75,8 +78,26 @@ class Server(BaseSocket):
                 break
 
     def update_game(self, data, index):
+        # рассчет игровых параметров
         return 'data arrived'
 
+
+    def generate_mess(self):
+        mess = 'GAME_DATA!!'
+        for user in self.users:
+            mess += f'{user.ship.x}!!'
+            mess += f'{user.ship.y}!!'
+            mess += f'{user.ship.v}!!'
+            mess += f'{user.ship.angle}!!'
+            mess += f'{user.ship.color}!!'
+            for bullet in user.bullets:
+                mess += f'{bullet.x}!!'
+                mess += f'{bullet.y}!!'
+                mess += f'{bullet.v}!!'
+                mess += f'{bullet.angle}!!'
+            mess += 'next!!'
+        mess += 'end'
+        return mess
 
 
 if __name__ == '__main__':

@@ -19,16 +19,31 @@ class Ship(BaseObject):
 
 class User():
 
-    def __init__(self, user_socket, user_address):
+    def __init__(self, user_socket=None, user_address=None):
         self.name = ''
         self.ship = Ship()
         self.bullets = []
+        self.num_bullets = 3
         self.socket = user_socket
         self.address = user_address
         self.score = 0
         self.index = 0
 
 
+class lichinus(BaseObject):
+    def __init__(self):
+        super(lichinus, self).__init__()
+
+
+
+class Wall(BaseObject):
+    def __init__(self):
+        super(Wall, self).__init__()
+
+
+class GameMap():
+    def __init__(self):
+        pass
 
 
 
