@@ -14,7 +14,7 @@ class Server(BaseSocket):
     # запуск сервера
     def set_up(self):
         self.bind(
-            ('172.20.10.3', 4000)
+            ('127.0.0.1', 10101)
         )
         self.listen()
         self.accept_sockets()
@@ -25,7 +25,11 @@ class Server(BaseSocket):
             data = self.generate_mess()
         # отправка данных пользователям
         for user in self.users:
-            user.socket.send(data.encode('utf8'))
+            try:
+                user.socket.send(data.encode('utf8'))
+            except:
+                self.delete_user(user.index)
+
 
 
     def recv_data(self, recv_socket=None):
@@ -48,8 +52,8 @@ class Server(BaseSocket):
             if data == 'exit':
                 self.close()
                 sys.exit()
-            self.update_game(data, index)
-            self.send_data()
+            mess = self.update_game(data, index)
+            self.send_data(mess)
 
 
     def accept_sockets(self):
@@ -98,6 +102,9 @@ class Server(BaseSocket):
             mess += 'next!!'
         mess += 'end'
         return mess
+
+    def delete_user(self, index):
+        pass
 
 
 if __name__ == '__main__':

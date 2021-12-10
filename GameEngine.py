@@ -1,7 +1,7 @@
 import pygame
 
 def events():
-    mess = ' '
+    mess = ''
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             return 'exit'
@@ -15,6 +15,8 @@ def events():
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_n:
                 mess = '-'
+    if mess == '':
+        mess = 'no_events'
     return mess
 
 def InitPygame():
