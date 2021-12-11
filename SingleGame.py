@@ -2,6 +2,9 @@ import pygame
 import random
 import os
 import math
+import time
+import threading
+import sys
 
 
 # константы
@@ -35,7 +38,7 @@ class Bullet(pygame.sprite.Sprite):
         x = float(direction.x)
         y = float(direction.y)
         self.direction = pygame.math.Vector2(x, y)
-        self.position = position + direction * 10  # чтоб появился на носу коробля
+        self.position = position + direction * 15  # чтоб появился на носу коробля
 
         angle = self.direction.angle_to((1, 0))  # расчет текущего угла
         self.image = pygame.transform.rotate(self.image, angle)  # поворот изображения по направлению движения
@@ -48,9 +51,12 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.center = self.position
 
 
+
+
+
 # спрайт
 class Player(pygame.sprite.Sprite):
-    def __init__(self, screen):
+    def __init__(self):
         super(Player, self).__init__()
         ship_choice = random.randint(1, 4)  # выбор корабля
         self.image = pygame.image.load(os.path.join(img_folder, f'star_ship{ship_choice}.png')).convert_alpha()  # начальное изображение, не меняется
@@ -60,6 +66,10 @@ class Player(pygame.sprite.Sprite):
         self.direction = pygame.math.Vector2(SPEED, 0)
         self.rotate = False
         self.no_rotated_image = self.image
+        self.score = 0
+        self.visible = True
+        self.collide_with_ship = None
+        self.num_bullets = 3
 
 
 
@@ -78,7 +88,10 @@ class Player(pygame.sprite.Sprite):
         if self.rotate:
             self.direction.rotate_ip(ROTATE_SPEED)  # поворот против часовой стрелки
 
-        self.position += self.direction  # движение коробля
+        if self.collide_with_ship is None:
+            self.position += self.direction  # движение коробля
+
+
 
         # ререндер спрайта
         angle = self.direction.angle_to((1, 0))  # расчет текущего угла
@@ -88,30 +101,18 @@ class Player(pygame.sprite.Sprite):
 
 
 
+def add_enemy(all_sprites, enemy):
+    time.sleep(5)
+    all_sprites.add(enemy)
 
+def print_num_bullets(screen, all_sprites):
+    for sprite in all_sprites.copy():
+        font = pygame.font.Font(None, 30)
+        text = font.render(f'{sprite.num_bullets}', 1, WHITE)
+        text_position = sprite.position - pygame.math.Vector2(text.get_rect().center)
+        screen.blit(text, text_position)
 
-
-if __name__ == '__main__':
-
-    # Создаем игру и окно
-    pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("My Game")
-    clock = pygame.time.Clock()
-
-    # спрайты
-    all_sprites = pygame.sprite.Group()  # группа спрайтов
-    player = Player(screen)
-    all_sprites.add(player)
-    '''enemy = Player()
-    enemy.direction = pygame.math.Vector2(0, 0)
-    enemy.position = pygame.math.Vector2(WIDTH-100, HEIGHT-100)
-    all_sprites.add(enemy)'''
-
-    # пули
-    bullets = pygame.sprite.Group()
-
-
+def game_cycle(screen, clock, player, bullets, all_sprites):
     # Цикл игры
     running = True
     while running:
@@ -130,26 +131,101 @@ if __name__ == '__main__':
                     player.rotate = True
                 if event.key == pygame.K_SPACE:
                     # выстрел
-                    new_bullet = Bullet(player.position, player.direction)
-                    bullets.add(new_bullet)
+                    if len(bullets) < 3:
+                        new_bullet = Bullet(player.position, player.direction)
+                        bullets.add(new_bullet)
+                        player.num_bullets -= 1
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_d:
                     # деактивация поворота
                     player.rotate = False
 
-
         # Обновление
         all_sprites.update()
         bullets.update()
+
+        # Удаление улетевших пуль
+        for bullet in bullets.copy():
+            if (bullet.position.x > WIDTH + 400) or (
+                    bullet.position.x < 0 - 400) or (
+                    bullet.position.y > HEIGHT + 400) or (
+                    bullet.position.y < 0 - 400):
+                bullets.remove(bullet)
+                player.num_bullets += 1
+
+        # столкновения
+        to_break = False  # для завершения раунда
+        for sprite in all_sprites.copy():
+            # с пулями
+            for bullet in bullets.copy():
+                if pygame.sprite.collide_mask(sprite, bullet):
+                    # очки за попадание
+                    if sprite == player:
+                        player.score -= 1
+                    else:
+                        player.score += 1
+                    print(player.score)
+                    bullets.remove(bullet)
+                    player.num_bullets += 1
+                    all_sprites.remove(sprite)
+                    to_break = True
+            # с кораблями
+            for another_sprite in all_sprites.copy():
+                if another_sprite != sprite:
+                    if pygame.sprite.collide_mask(sprite, another_sprite):
+                        joint_direction = sprite.direction + another_sprite.direction
+                        angle = another_sprite.direction.angle_to(joint_direction)
+                        # реализация отталкивания
+
+
+
 
         # Рендеринг
         screen.fill(BG_COLOR)
         bullets.draw(screen)
         all_sprites.draw(screen)
+        print_num_bullets(screen, all_sprites)
 
         # После отрисовки всего, переворачиваем экран
         pygame.display.flip()
+        if to_break:
+            break
+    return running
 
+
+
+if __name__ == '__main__':
+
+    # Создаем игру и окно
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("My Game")
+    clock = pygame.time.Clock()
+
+    # спрайты
+    all_sprites = pygame.sprite.Group()  # группа спрайтов
+    player = Player()
+    all_sprites.add(player)
+    enemy = Player()
+    enemy.direction = pygame.math.Vector2(SPEED, 0)
+    enemy.position = pygame.math.Vector2(WIDTH-100, HEIGHT-100)
+
+
+    # пули
+    bullets = pygame.sprite.Group()
+
+
+    # цикл раундов
+    for i in range(5):
+        print(f'Round {i}')
+        add_enemy_thread = threading.Thread(
+            target=add_enemy,
+            args=(all_sprites, enemy)
+        )
+        add_enemy_thread.start()
+
+        if not game_cycle(screen, clock, player, bullets, all_sprites):
+            break
 
     # завершение программы
     pygame.quit()
