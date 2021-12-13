@@ -15,6 +15,8 @@ SPEED = 5
 ROTATE_SPEED = 5
 ACCEL = 1
 
+'''123'''
+
 # Задаем цвета
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -70,8 +72,6 @@ class Player(pygame.sprite.Sprite):
         self.rotate = False
         self.no_rotated_image = self.image
         self.score = 0
-        self.visible = True
-        self.collide_with_ship = None
         self.num_bullets = 3
 
 
@@ -104,8 +104,8 @@ class Player(pygame.sprite.Sprite):
         angle = self.velocity.angle_to((1, 0))  # расчет текущего угла
         self.image = pygame.transform.rotate(self.no_rotated_image, angle)  # поворот изображения по направлению движения
         self.mask = pygame.mask.from_surface(self.image)  # снятие маски с нового спрайта
-        self.rect = self.image.get_rect(center=(self.position-self.velocity*6))
-
+        self.rect = self.image.get_rect(center=(self.position))
+        self.rect.center = self.position - self.velocity * 6
 
 
 def add_enemy(all_sprites, enemy):
@@ -116,7 +116,7 @@ def print_num_bullets(screen, all_sprites):
     for sprite in all_sprites.copy():
         font = pygame.font.Font(None, 30)
         text = font.render(f'{sprite.num_bullets}', 1, WHITE)
-        text_position = sprite.position-sprite.velocity*5 - pygame.math.Vector2(text.get_rect().center)
+        text_position = sprite.position - pygame.math.Vector2(text.get_rect().center)
         screen.blit(text, text_position)
 
 def game_cycle(screen, clock, player, bullets, all_sprites):
