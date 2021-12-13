@@ -11,8 +11,9 @@ import sys
 WIDTH = 700
 HEIGHT = 540
 FPS = 60
-SPEED = 3
-ROTATE_SPEED = 4
+SPEED = 5
+ROTATE_SPEED = 5
+ACCEL = 1
 
 # Задаем цвета
 WHITE = (255, 255, 255)
@@ -37,17 +38,18 @@ class Bullet(pygame.sprite.Sprite):
         self.speed = 2
         x = float(direction.x)
         y = float(direction.y)
-        self.direction = pygame.math.Vector2(x, y)
+        self.velocity = pygame.math.Vector2(x, y)
         self.position = position + direction * 15  # чтоб появился на носу коробля
 
-        angle = self.direction.angle_to((1, 0))  # расчет текущего угла
+
+        angle = self.velocity.angle_to((1, 0))  # расчет текущего угла
         self.image = pygame.transform.rotate(self.image, angle)  # поворот изображения по направлению движения
         self.mask = pygame.mask.from_surface(self.image)  # снятие маски с нового спрайта
         self.rect = self.image.get_rect(center=self.position)
 
 
     def update(self):
-        self.position += self.direction * self.speed
+        self.position += self.velocity * self.speed
         self.rect.center = self.position
 
 
@@ -63,7 +65,8 @@ class Player(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)  # маска текущего изображения, обновляется при повороте
         self.position = pygame.math.Vector2(WIDTH / 2, HEIGHT / 2)  # координита центра спрайта
         self.rect = self.image.get_rect(center=self.position)
-        self.direction = pygame.math.Vector2(SPEED, 0)
+        self.velocity = pygame.math.Vector2(SPEED, 0)
+        self.acceleration = pygame.math.Vector2(ACCEL, 0)
         self.rotate = False
         self.no_rotated_image = self.image
         self.score = 0
@@ -86,18 +89,22 @@ class Player(pygame.sprite.Sprite):
 
         # движение
         if self.rotate:
-            self.direction.rotate_ip(ROTATE_SPEED)  # поворот против часовой стрелки
+            self.acceleration.rotate_ip(ROTATE_SPEED)  # поворот против часовой стрелки
 
-        if self.collide_with_ship is None:
-            self.position += self.direction  # движение коробля
+        self.velocity += self.acceleration
+
+        if self.velocity.length() > SPEED:
+            self.velocity -= self.velocity / self.velocity.length() * self.acceleration.length()
+
+        self.position += self.velocity  # движение коробля
 
 
 
         # ререндер спрайта
-        angle = self.direction.angle_to((1, 0))  # расчет текущего угла
+        angle = self.velocity.angle_to((1, 0))  # расчет текущего угла
         self.image = pygame.transform.rotate(self.no_rotated_image, angle)  # поворот изображения по направлению движения
         self.mask = pygame.mask.from_surface(self.image)  # снятие маски с нового спрайта
-        self.rect = self.image.get_rect(center=self.position)
+        self.rect = self.image.get_rect(center=(self.position-self.velocity*6))
 
 
 
@@ -109,7 +116,7 @@ def print_num_bullets(screen, all_sprites):
     for sprite in all_sprites.copy():
         font = pygame.font.Font(None, 30)
         text = font.render(f'{sprite.num_bullets}', 1, WHITE)
-        text_position = sprite.position - pygame.math.Vector2(text.get_rect().center)
+        text_position = sprite.position-sprite.velocity*5 - pygame.math.Vector2(text.get_rect().center)
         screen.blit(text, text_position)
 
 def game_cycle(screen, clock, player, bullets, all_sprites):
@@ -132,7 +139,7 @@ def game_cycle(screen, clock, player, bullets, all_sprites):
                 if event.key == pygame.K_SPACE:
                     # выстрел
                     if len(bullets) < 3:
-                        new_bullet = Bullet(player.position, player.direction)
+                        new_bullet = Bullet(player.position, player.velocity)
                         bullets.add(new_bullet)
                         player.num_bullets -= 1
             if event.type == pygame.KEYUP:
@@ -173,8 +180,8 @@ def game_cycle(screen, clock, player, bullets, all_sprites):
             for another_sprite in all_sprites.copy():
                 if another_sprite != sprite:
                     if pygame.sprite.collide_mask(sprite, another_sprite):
-                        joint_direction = sprite.direction + another_sprite.direction
-                        angle = another_sprite.direction.angle_to(joint_direction)
+                        joint_direction = sprite.velocity + another_sprite.velocity
+                        angle = another_sprite.velocity.angle_to(joint_direction)
                         # реализация отталкивания
 
 
@@ -207,7 +214,7 @@ if __name__ == '__main__':
     player = Player()
     all_sprites.add(player)
     enemy = Player()
-    enemy.direction = pygame.math.Vector2(SPEED, 0)
+    enemy.velocity = pygame.math.Vector2(SPEED, 0)
     enemy.position = pygame.math.Vector2(WIDTH-100, HEIGHT-100)
 
 
