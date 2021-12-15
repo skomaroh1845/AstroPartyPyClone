@@ -1,23 +1,28 @@
 from Socket import BaseSocket
 from threading import Thread
-import GameEngine
-import BaseClasses
+import GraphicEngine
 import sys
+import ClientControls
+import pygame
 
 
 class Client(BaseSocket):
     def __init__(self):
         super(Client, self).__init__()
-        self.FPS = 1
+        # графические настройки
+        self.FPS = 60
+        self.WIDTH = 1200
+        self.HEIGHT = 1000
+        self.BG_COLOR = (0, 50, 77)
+        self.screen, self.clock = GraphicEngine.InitGraphic(self.WIDTH, self.HEIGHT)
 
-        # создание локальной базы данных из 4 игроков с 5 пулями
-        self.users = [BaseClasses.User() for i in range(4)]
-        for user in self.users:
-            user.bullets = [BaseClasses.Bullet for i in range(10)]
-
-        self.game_map = ''
-
-
+        # создание локальной базы данных
+        #out_of_map = pygame.math.Vector2(0, -40)
+        #common_dir = pygame.math.Vector2(5, 0)
+        self.bullet_sprites = pygame.sprite.Group()
+        self.map_sprites = pygame.sprite.Group()
+        self.ship_sprites = pygame.sprite.Group()
+        self.running = True
 
 
     # запуск клиента
@@ -26,100 +31,72 @@ class Client(BaseSocket):
             ('127.0.0.1', 10101)
         )
 
-        # выделение потока на прием данных
+        # выделение потока на прием данных и обработку данных
         recv_server = Thread(
             target=self.recv_data
         )
         recv_server.start()
 
-        self.game_loop(True)  # запуск игры
+        self.game_loop()  # запуск игры
 
+    # закрытие клиента
+    def quit(self):
+        self.running = False
+        self.close()
 
+# игровой цикл (в рамках одного раунда)
+    def game_loop(self):
 
-    def game_loop(self, running):
-        Screen, BG_color, clock = GameEngine.InitPygame()
+        running = True
         while running:
-            clock.tick(self.FPS)  # FPS
+            self.clock.tick(self.FPS)  # FPS
 
-            # main game loop
-            GameEngine.UpdateWindow(Screen, BG_color, self.users)
+            GraphicEngine.UpdateWindow(
+                self.screen, self.BG_COLOR,
+                self.ship_sprites,
+                self.bullet_sprites,
+                self.map_sprites
+            )
 
-            # обработка клавишь и отправка на сервер
-            mess = GameEngine.events()
-            self.send_data(mess)
+            # обработка нажатий
+            mess = GraphicEngine.events()
+            # отправка на сервер
+            if mess != '':
+                self.send_data(mess)
+            # завершение игры
             if mess == 'exit':
-                GameEngine.Quit()
+                GraphicEngine.Quit()
                 self.close()
-                sys.exit()
-                break
+                self.running = False
+                #sys.exit()
+                running = False
 
-
+    # отправка данных на сервер
     def send_data(self, data):
         self.send(data.encode('utf8'))
 
-
+    # получение данных с сервера
     def recv_data(self, recv_socket=None):
-        while True:
+        while self.running:
+            # получение данных
             try:
-                # получение данных
                 data = self.recv(1024)
-                data = data.decode('utf8')
-                # запись данных
-                if data.startswith('GAME_DATA'):
-                    self.data_proccessing(data)
-                else:
-                    print(data)
-
             except:
                 break
+            data = data.decode('utf8')
+            # обработка данных с сервера
+            if data.startswith('GAME_DATA'):
+                ClientControls.data_processing(
+                    data,
+                    self.ship_sprites,
+                    self.bullet_sprites
+                )
+            else:
+                print(data)
 
-
-    def data_proccessing(self, data):
-        data_list = data.split('!!')
-        # обход списка
-        i = 1  # первый элемент - служебное слово
-        block = data_list[i]
-        for user in self.users:
-            if block == 'end':
-                break
-            if block == 'next':
-                i += 1
-                block = data_list[i]
-
-            user.ship.x = block
-            i += 1
-            block = data_list[i]
-            user.ship.y = block
-            i += 1
-            block = data_list[i]
-            user.ship.v = block
-            i += 1
-            block = data_list[i]
-            user.ship.angle = block
-            i += 1
-            block = data_list[i]
-            user.ship.color = block
-            i += 1
-            block = data_list[i]
-            for bullet in user.bullets:
-                if block == 'end':
-                    break
-                if block == 'next':
-                    break
-                bullet.x = block
-                i += 1
-                block = data_list[i]
-                bullet.y = block
-                i += 1
-                block = data_list[i]
-                bullet.v = block
-                i += 1
-                block = data_list[i]
-                bullet.angle = block
-                i += 1
-                block = data_list[i]
 
 if __name__ == '__main__':
     client = Client()
     client.set_up()
+
 

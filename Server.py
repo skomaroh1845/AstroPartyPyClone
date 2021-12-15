@@ -13,7 +13,7 @@ class Server(BaseSocket):
         self.map_sprites = pygame.sprite.Group()
         self.ship_sprites = pygame.sprite.Group()
         '''self.lichinus_sprites = pygame.sprite.Group()'''
-        self.FPS = 1
+        self.FPS = 60
         self.game_started = False
 
     # запуск сервера
@@ -43,25 +43,37 @@ class Server(BaseSocket):
     # генератор служебных сообщений
     def generate_mess(self):
         mess = 'GAME_DATA!!'
+        # информация о кораблях
         for user in self.users:
-            mess += f'{user.ship.position.x}!!'
+            mess += f'{user.ship.ship_index}!!'  # тип корабля
+            mess += f'{user.ship.protected}!!'
+
+            mess += f'{user.ship.position.x}!!'  # координаты корабля
             mess += f'{user.ship.position.y}!!'
-            mess += f'{user.ship.velocity.x}!!'
+
+            mess += f'{user.ship.velocity.x}!!'  # его направление
             mess += f'{user.ship.velocity.y}!!'
-            mess += f'{user.ship.ship_index}!!'
-            for bullet in self.bullet_sprites:
-                mess += f'{bullet.position.x}!!'
-                mess += f'{bullet.position.y}!!'
-                mess += f'{bullet.velocity.x}!!'
-                mess += f'{bullet.velocity.y}!!'
-            mess += 'next!!'
+
+            mess += f'{user.alive}!!'            # жив или нет
+        mess += 'bull!!'
+        # информация о пулях
+        mess +=f'{len(self.bullet_sprites)}!!'  # сообщает сколько пуль, т к их количество постоянно меняется
+        for bullet in self.bullet_sprites:
+            mess += f'{bullet.position.x}!!'
+            mess += f'{bullet.position.y}!!'
+            mess += f'{bullet.velocity.x}!!'
+            mess += f'{bullet.velocity.y}!!'
         mess += 'end'
+        #print(mess)
         return mess
 
 
     # принимает данные от пользователей в реальном времени
     def recv_data(self, recv_socket=None):
-        data = recv_socket.recv(1024)
+        try:
+            data = recv_socket.recv(1024)
+        except:
+            return 'exit'
         return data.decode('utf8')
 
 
@@ -74,16 +86,25 @@ class Server(BaseSocket):
         self.send_data('Welcome to the best game ever!')
         # работа интерфейса
         # ...
-
+        self.send_data('press enter to start')
+        data = self.recv_data(user.socket)
+        if data == 'Enter':
+            ServerControls.player_init(self.users[index], index, self.ship_sprites)
+            self.game_started = True
+        #
         # прием данных пользователя
         while True:
             data = self.recv_data(user.socket)
             if data == 'exit':
                 self.delete_user(user)
                 break  # пользователь вышел - цикл прерывается, поток завершается
-            ServerControls.write_down_data()
+            ServerControls.write_down_data(self.users[index],
+                                           data,
+                                           self.bullet_sprites)
+
             #для отладки
-            self.send_data('you are connected')
+            #self.send_data(data)
+            #
 
         print('Thread is ended')
 
@@ -121,21 +142,22 @@ class Server(BaseSocket):
     def game_engine(self):
         running = True
         pygame.init()
+        pygame.display.set_mode((100, 1))
         clock = pygame.time.Clock()
 
         while running:
             clock.tick(self.FPS)
-            print('tick')
+            #print('tick')
             if self.game_started:
+                # считаем данные
+                ServerControls.update_positions(
+                    self.users,
+                    self.ship_sprites,
+                    self.bullet_sprites,
+                    self.map_sprites
+                )
                 # отправляем данные
                 self.send_data()
-
-                # считаем данные
-                ServerControls.update_positions(self.users,
-                                                self.ship_sprites,
-                                                self.bullet_sprites,
-                                                self.map_sprites)
-
         pygame.quit()
 
 
@@ -143,6 +165,8 @@ class Server(BaseSocket):
     def delete_user(self, user):
         self.users.remove(user)
         print(f'User {user.address} disconnected')
+        self.game_started = False
+        print('Game stopped')
 
 
 

@@ -7,8 +7,8 @@ ACCEL = 1
 
 class BaseSpriteObject(pygame.sprite.Sprite):
     @abstractmethod
-    def __init__(self, x=0, y=0, v_x=0, v_y=0, image_name=''):  # image='name.png'
-        super(BaseObject, self).__init__()
+    def __init__(self, x=0, y=0, v_x=SPEED, v_y=0, image_name=''):  # image='name.png'
+        super(BaseSpriteObject, self).__init__()
         self.position = pygame.math.Vector2(x, y)
         self.velocity = pygame.math.Vector2(v_x, v_y)
         self.acceleration = ACCEL * self.velocity / self.velocity.length()  # ед. вектор сонаправ. скорости
@@ -38,7 +38,7 @@ class BaseSpriteObject(pygame.sprite.Sprite):
         self.position += self.velocity
 
         if self.get_angle() != old_angle:  # если угол изменился - поворачиваем спрайт
-            self.update_sprite_angle()
+            self.update_sprite_angle(self.get_angle())
 
 
     def update_sprite_angle(self, angle):

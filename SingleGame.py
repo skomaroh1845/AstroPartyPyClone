@@ -8,14 +8,13 @@ import sys
 
 
 # константы
-WIDTH = 700
-HEIGHT = 540
+WIDTH = 1200
+HEIGHT = 1000
 FPS = 60
 SPEED = 5
 ROTATE_SPEED = 5
 ACCEL = 1
 
-'''123'''
 
 # Задаем цвета
 WHITE = (255, 255, 255)
