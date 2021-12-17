@@ -7,7 +7,7 @@ ROTATE_SPEED = 5
 
 class Bullet(BaseSpriteObject):
     def __init__(self, position, direction, ship_owner):  # предполагается, что pos указывает на нос корабля
-        bullet_pos = position + direction * 2
+        bullet_pos = position + direction * 5
         self.bull_speed = 2  # во сколько раз пуля быстрее корабля
         super(Bullet, self).__init__(bullet_pos.x, bullet_pos.y,
                                      direction.x, direction.y, 'bullet.png')
@@ -17,6 +17,11 @@ class Bullet(BaseSpriteObject):
         super(Bullet, self).update()
         self.position += self.velocity * (self.bull_speed - 1)
         self.rect.center = self.position
+
+
+    def update_sprite_graphics(self):
+        super(Bullet, self).update_sprite_graphics()
+
 
 
 
@@ -65,9 +70,8 @@ class Ship(BaseSpriteObject):
         if self.position.y < 0 - 40:
             self.position.y = 1000 + 40
 
+
     def update_skin(self, ship_choice=None, protected=None):
-        game_folder = os.path.dirname(__file__)
-        img_folder = os.path.join(game_folder, 'img')
         if protected is not None:
             if protected:
                 protected = '_prot'
@@ -81,10 +85,15 @@ class Ship(BaseSpriteObject):
                 protected = ''
             image_name = f'star_ship{self.ship_index}{protected}.png'
 
-        self.image = pygame.image.load(os.path.join(img_folder, image_name)).convert_alpha()
+        self.image = pygame.image.load(os.path.join(self.img_folder, image_name)).convert_alpha()
         self.no_rotated_image = self.image
         self.image = pygame.transform.rotate(self.no_rotated_image, self.get_angle())
+        self.rect = self.image.get_rect(center=(self.position))
+        self.rect.center = self.position - self.velocity * 6  # смещение центра вращения
 
+    def update_sprite_graphics(self):
+        super(Ship, self).update_sprite_graphics()
+        self.rect.center = self.position - self.velocity * 6
 
 
 

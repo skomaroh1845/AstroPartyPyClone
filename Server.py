@@ -44,6 +44,7 @@ class Server(BaseSocket):
     def generate_mess(self):
         mess = 'GAME_DATA!!'
         # информация о кораблях
+        mess += f'{len(self.ship_sprites)}!!'  # сообщает сколько кораблей
         for user in self.users:
             mess += f'{user.ship.ship_index}!!'  # тип корабля
             mess += f'{user.ship.protected}!!'
@@ -55,15 +56,15 @@ class Server(BaseSocket):
             mess += f'{user.ship.velocity.y}!!'
 
             mess += f'{user.alive}!!'            # жив или нет
-        mess += 'bull!!'
+
         # информация о пулях
-        mess +=f'{len(self.bullet_sprites)}!!'  # сообщает сколько пуль, т к их количество постоянно меняется
+        mess +=f'{len(self.bullet_sprites)}!!'  # сообщает сколько пуль
         for bullet in self.bullet_sprites:
             mess += f'{bullet.position.x}!!'
             mess += f'{bullet.position.y}!!'
             mess += f'{bullet.velocity.x}!!'
             mess += f'{bullet.velocity.y}!!'
-        mess += 'end'
+        mess += 'END'
         #print(mess)
         return mess
 

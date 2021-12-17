@@ -16,6 +16,15 @@ def update_positions(users, ship_sprites, bullet_sprites, map_sprites):
     # столкновения
     # пули c остальным
     for bullet in bullet_sprites:
+        # удалим улетевшие за карту пули
+        if (bullet.position.x > 1200 + 40) or (
+                bullet.position.x < 0 - 40) or (
+                bullet.position.y > 1000 + 40) or (
+                bullet.position.y < 0 - 40):
+            bullet_sprites.remove(bullet)
+            continue
+
+        # проверим столкновения с пулями на карте
         hit = False
         for ship in ship_sprites:
             if collide_mask(bullet, ship):

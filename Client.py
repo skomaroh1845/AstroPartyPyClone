@@ -17,8 +17,6 @@ class Client(BaseSocket):
         self.screen, self.clock = GraphicEngine.InitGraphic(self.WIDTH, self.HEIGHT)
 
         # создание локальной базы данных
-        #out_of_map = pygame.math.Vector2(0, -40)
-        #common_dir = pygame.math.Vector2(5, 0)
         self.bullet_sprites = pygame.sprite.Group()
         self.map_sprites = pygame.sprite.Group()
         self.ship_sprites = pygame.sprite.Group()

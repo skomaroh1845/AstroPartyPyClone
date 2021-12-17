@@ -6,24 +6,24 @@ import BaseClasses
 def data_processing(data, ship_sprites, bullet_sprites):
     data_list = data.split('!!')
     #print(data_list)
-    # обход списка
+
+    # чтение данных списка
     i = 0  # первый элемент - служебное слово
     # данные кораблей
-    if len(ship_sprites) > 0:
+    i += 1
+    ship_num = int(data_list[i])  # сколько кораблей
+    if len(ship_sprites) > 0 and len(ship_sprites) == ship_num:
         for ship in ship_sprites:
-            if data_list[i+1] != 'bull':
-                ship_index, protected, position, velocity, alive, i = read_ship_data(data_list, i)
-                ship.position = position
-                ship.velocity = velocity
-                if ship.ship_index != ship_index or ship.protected != protected:
-                    ship.ship_index = ship_index
-                    ship.protected = protected
-                    ship.update_skin(ship_index, protected)
-            else:
-                i += 1  # для дальнейшего корректного чтения
-                break
+            ship_index, protected, position, velocity, alive, i = read_ship_data(data_list, i)
+            ship.position = position
+            ship.velocity = velocity
+            if ship.ship_index != ship_index or ship.protected != protected:
+                ship.ship_index = ship_index
+                ship.protected = protected
+                ship.update_skin()
     else:
-        while data_list[i] != 'bull':
+        ship_sprites.empty()
+        for j in range(ship_num):
             ship_index, protected, position, velocity, alive, i = read_ship_data(data_list, i)
             ship = BaseClasses.Ship(
                 position,
@@ -36,25 +36,29 @@ def data_processing(data, ship_sprites, bullet_sprites):
 
     # данные пуль
     i += 1
-    new_len = int(data_list[i])
-    if new_len > 0:
-        if len(bullet_sprites) == new_len:
+    bull_num = int(data_list[i])
+    #print(bull_num)
+    if bull_num > 0:
+        if len(bullet_sprites) == bull_num:
             for bullet in bullet_sprites:
-                if data_list[i+1] != 'end':
-                    position, velocity, i = read_bullet_data(data_list, i)
-                    bullet.position = position
-                    bullet.velocity = velocity
-                else:
-                    break
-        else:
-            while data_list[i] != 'end':
                 position, velocity, i = read_bullet_data(data_list, i)
+                bullet.position = position
+                bullet.velocity = velocity
+        else:
+            bullet_sprites.empty()
+            for j in range(bull_num):
+                try:
+                    position, velocity, i = read_bullet_data(data_list, i)
+                except:
+                    break
                 bullet = BaseClasses.Bullet(
                     position,
                     velocity,
                     0
                 )
                 bullet_sprites.add(bullet)
+    else:
+        bullet_sprites.empty()
 
 
 def read_ship_data(data_list, i):  # возвращает i = число итераций внутри функции + 1
@@ -82,7 +86,7 @@ def read_ship_data(data_list, i):  # возвращает i = число ите�
     i += 1
     alive = bool(data_list[i])
 
-    return ship_index, protected, position, velocity, alive, i+1
+    return ship_index, protected, position, velocity, alive, i
 
 
 def read_bullet_data(data_list, i): # возвращает i = число итераций внутри функции + 1
@@ -100,6 +104,6 @@ def read_bullet_data(data_list, i): # возвращает i = число ите
     y = float(data_list[i])
     velocity = Vector2(x, y)
 
-    return position, velocity, i+1
+    return position, velocity, i
 
 

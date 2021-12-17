@@ -46,8 +46,10 @@ def UpdateWindow(screen, bg_color, ship_sprites, bullet_sprites, map_sprites):
     # добавить звездное небо
     # ...
     # обновление спрайтов
-    ship_sprites.update()
-    bullet_sprites.update()
+    for ship in ship_sprites:
+        ship.update_sprite_graphics()
+    for bullet in bullet_sprites:
+        bullet.update_sprite_graphics()
 
     # отрисовка спрайтов
     map_sprites.draw(screen)
