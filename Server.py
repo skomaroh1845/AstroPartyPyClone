@@ -19,7 +19,7 @@ class Server(BaseSocket):
     # запуск сервера
     def set_up(self):
         self.bind(
-            ('127.0.0.1', 10101)
+            ('127.0.0.1', 10000)
         )
         self.listen()
 
@@ -82,6 +82,7 @@ class Server(BaseSocket):
 
     # занимается обработкой пользователя (игровой процесс)
     def user_host(self, index):
+        print(self, index)
         user = self.users[index]
         # инициализация клиента пользователя
         # загрузка карты
@@ -145,7 +146,7 @@ class Server(BaseSocket):
     def game_engine(self):
         running = True
         pygame.init()
-        pygame.display.set_mode((100, 1))
+        pygame.display.set_mode((100, 1), pygame.NOFRAME)
         clock = pygame.time.Clock()
 
         while running:

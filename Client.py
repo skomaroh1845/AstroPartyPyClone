@@ -32,7 +32,7 @@ class Client(BaseSocket):
         # подключение
         try:
             self.connect(
-                ('127.0.0.1', 10101)
+                ('127.0.0.1', 8000)
             )
         except:
             print("Can't connect to the server. Restart game")
