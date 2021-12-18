@@ -7,7 +7,7 @@ ROTATE_SPEED = 5
 
 class Bullet(BaseSpriteObject):
     def __init__(self, position, direction, ship_owner):  # предполагается, что pos указывает на нос корабля
-        bullet_pos = position + direction * 5
+        bullet_pos = position + direction * 4
         self.bull_speed = 2  # во сколько раз пуля быстрее корабля
         super(Bullet, self).__init__(bullet_pos.x, bullet_pos.y,
                                      direction.x, direction.y, 'bullet.png')
@@ -29,12 +29,16 @@ class Ship(BaseSpriteObject):
     def __init__(self, position, direction, ship_color, user_index, protected=True):
         if ship_color == 'red' or ship_color == 1:
             ship_choice = 1
+            self.color = 'Red'
         elif ship_color == 'purple' or ship_color == 2:
             ship_choice = 2
+            self.color = 'Purple'
         elif ship_color == 'green' or ship_color == 3:
             ship_choice = 3
+            self.color = 'Green'
         else:
             ship_choice = 4
+            self.color = 'Blue'
         if protected:
             protected = '_prot'
         else:
@@ -46,6 +50,7 @@ class Ship(BaseSpriteObject):
         )
         self.num_bullets = 3  # число пуль выпущенных за раз
         self.protected = True
+        self.score = None
         self.ship_index = ship_choice
         self.owner = user_index  # для идентификации корабля
         # ставим pos на нос корабля для смещения центра вращения
@@ -61,14 +66,14 @@ class Ship(BaseSpriteObject):
         self.rect.center = self.position - self.velocity * 6
 
         # закольцовка координат
-        if self.position.x > 1200 + 40:
+        if self.position.x > 900 + 40:
             self.position.x = 0 - 40
         if self.position.x < 0 - 40:
-            self.position.x = 1200 + 40
-        if self.position.y > 1000 + 40:
+            self.position.x = 900 + 40
+        if self.position.y > 720 + 40:
             self.position.y = 0 - 40
         if self.position.y < 0 - 40:
-            self.position.y = 1000 + 40
+            self.position.y = 720 + 40
 
 
     def update_skin(self, ship_choice=None, protected=None):
@@ -117,16 +122,11 @@ class User():
         self.alive = True
         #self.lichinus = False
         self.index = None
+        self.bull_timer = 3  # reload time
+        self.reload_start = None  # когда началась перезарядка
+        self.respawn_timer = None
+        self.color = None
 
-
-class Wall():
-    def __init__(self):
-        pass
-
-
-class GameMap():
-    def __init__(self):
-        pass
 
 
 

@@ -48,6 +48,7 @@ class Server(BaseSocket):
         for user in self.users:
             mess += f'{user.ship.ship_index}!!'  # тип корабля
             mess += f'{user.ship.protected}!!'
+            mess += f'{user.score}!!'           # счет
 
             mess += f'{user.ship.position.x}!!'  # координаты корабля
             mess += f'{user.ship.position.y}!!'
@@ -56,6 +57,7 @@ class Server(BaseSocket):
             mess += f'{user.ship.velocity.y}!!'
 
             mess += f'{user.alive}!!'            # жив или нет
+            mess += f'{user.ship.num_bullets}!!'
 
         # информация о пулях
         mess +=f'{len(self.bullet_sprites)}!!'  # сообщает сколько пуль
@@ -87,11 +89,11 @@ class Server(BaseSocket):
         self.send_data('Welcome to the best game ever!')
         # работа интерфейса
         # ...
-        self.send_data('press enter to start')
-        data = self.recv_data(user.socket)
-        if data == 'Enter':
-            ServerControls.player_init(self.users[index], index, self.ship_sprites)
-            self.game_started = True
+        #self.send_data('press enter to start')
+        #data = self.recv_data(user.socket)
+        #if data == 'Enter':
+        ServerControls.player_init(self.users[index], index, self.ship_sprites)
+        self.game_started = True
         #
         # прием данных пользователя
         while True:
@@ -157,6 +159,7 @@ class Server(BaseSocket):
                     self.bullet_sprites,
                     self.map_sprites
                 )
+
                 # отправляем данные
                 self.send_data()
         pygame.quit()
@@ -164,6 +167,7 @@ class Server(BaseSocket):
 
     # удаление отключившегося игрока и завершение его потока
     def delete_user(self, user):
+        self.ship_sprites.remove(user.ship)
         self.users.remove(user)
         print(f'User {user.address} disconnected')
         self.game_started = False

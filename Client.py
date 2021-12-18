@@ -11,8 +11,8 @@ class Client(BaseSocket):
         super(Client, self).__init__()
         # графические настройки
         self.FPS = 60
-        self.WIDTH = 1200
-        self.HEIGHT = 1000
+        self.WIDTH = 900
+        self.HEIGHT = 720
         self.BG_COLOR = (0, 50, 77)
         self.screen, self.clock = GraphicEngine.InitGraphic(self.WIDTH, self.HEIGHT)
 
@@ -24,10 +24,18 @@ class Client(BaseSocket):
 
 
     # запуск клиента
-    def set_up(self,):
-        self.connect(
-            ('127.0.0.1', 10101)
-        )
+    def set_up(self):
+
+        # интерфейс
+        self.user_interface()
+
+        # подключение
+        try:
+            self.connect(
+                ('127.0.0.1', 10101)
+            )
+        except:
+            print("Can't connect to the server. Restart game")
 
         # выделение потока на прием данных и обработку данных
         recv_server = Thread(
@@ -37,10 +45,6 @@ class Client(BaseSocket):
 
         self.game_loop()  # запуск игры
 
-    # закрытие клиента
-    def quit(self):
-        self.running = False
-        self.close()
 
 # игровой цикл (в рамках одного раунда)
     def game_loop(self):
@@ -57,7 +61,7 @@ class Client(BaseSocket):
             )
 
             # обработка нажатий
-            mess = GraphicEngine.events()
+            mess = GraphicEngine.game_events()
             # отправка на сервер
             if mess != '':
                 self.send_data(mess)
@@ -68,6 +72,8 @@ class Client(BaseSocket):
                 self.running = False
                 #sys.exit()
                 running = False
+
+
 
     # отправка данных на сервер
     def send_data(self, data):
@@ -91,6 +97,26 @@ class Client(BaseSocket):
                 )
             else:
                 print(data)
+
+
+    def user_interface(self):
+        self.__start_screen()
+        if not self.running:
+            sys.exit()
+
+
+    def __start_screen(self):
+        GraphicEngine.start_screen(self.screen)
+        running = True
+        while running:
+            event = GraphicEngine.game_events()
+            if event == 'exit':
+                GraphicEngine.Quit()
+                self.close()
+                self.running = False
+                running = False
+            if event == 'Enter':
+                running = False
 
 
 if __name__ == '__main__':
