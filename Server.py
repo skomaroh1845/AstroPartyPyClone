@@ -19,7 +19,7 @@ class Server(BaseSocket):
     # запуск сервера
     def set_up(self):
         self.bind(
-            ('127.0.0.1', 10000)
+            ('127.0.0.1', 8000)
         )
         self.listen()
 
